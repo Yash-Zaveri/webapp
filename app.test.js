@@ -2,6 +2,8 @@ import request from "supertest";
 import app from "./index.js";
 import User from "./src/user/User.js";
 import bcrypt from "bcrypt";
+import sequelize from "./src/config/db.js"; 
+
 
 describe("Create an account and using GET, validate account exists", () => {
     test("should respond with a 200 status code", async () => {
@@ -40,11 +42,7 @@ describe("Update the account and using GET, validate the account was updated", (
     })
 })
 
-// // Close the database connection after all tests
-// afterAll(async () => {
-//     await sequelize.close(); // Adjust this if your Sequelize instance is named differently
-// });
-// Close the database connection after all tests
+
 afterAll(async () => {
-    await sequelize.close(); // Adjust this if your Sequelize instance is named differently
+    await sequelize.close(); 
 });
