@@ -16,7 +16,9 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "jest"
+    "test": "jest",
+    "tests": "echo \"Dummy test\"",
+    "dev": "npx nodemon index.js"
   },
   "author": "",
   "license": "ISC",
