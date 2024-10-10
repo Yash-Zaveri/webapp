@@ -40,17 +40,8 @@ describe("Update the account and using GET, validate the account was updated", (
         expect(passwordMatch).toBe(true);
     })
 })
-
-
-// afterAll(async () => {
-//     await sequelize.close(); 
-// });
-
-// afterAll((done) => {
-//     app.close(done);
-// })
-
-// Use the closeServer function to close the server after all tests
+// Close the server after all tests
 afterAll((done) => {
-    closeServer(done); // Close the server after all tests
-});
+    closeServer(done);
+  });
+  

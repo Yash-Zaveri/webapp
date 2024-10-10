@@ -35,19 +35,21 @@ app.use((req, res) => {
 // Function to close the server
 export const closeServer = (done) => {
   if (server) {
-    server.close(done);
+    server.close(done);  // Properly close the server when requested
   } else {
     done();
   }
 };
 
+
 // Connect to the database and start the server
 const PORT = process.env.PORT || 5003;
 checkConnection()
   .then(() => {
-    app.listen(PORT, () => {
+    server = app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`.green.bold);
     });
+    
   })
   .catch((error) => {
     console.error('Failed to connect to the database:', error.message.red.bold);

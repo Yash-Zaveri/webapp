@@ -38,8 +38,8 @@ jobs:
       run: npm ci
 
     - name: Run Integration Tests
-      run: npm test || true
-      timeout-minutes: 10
+      run: npm run test:cli
+      timeout-minutes: 5
 
     - name: Drop DB
       run: mysql -h ${{secrets.MYSQL_HOST}} --port 3306 -u${{secrets.MYSQL_USER}} -p${{secrets.MYSQL_PASSWORD}} -e "DROP DATABASE ${{ secrets.MYSQL_DATABASE }};"
