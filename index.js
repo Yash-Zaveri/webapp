@@ -42,3 +42,5 @@ checkConnection()
   .catch((error) => {
     console.error('Failed to connect to the database:', error.message.red.bold);
   });
+
+  export default app;
