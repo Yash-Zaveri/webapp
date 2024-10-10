@@ -1,9 +1,8 @@
 import request from "supertest";
-import app from "./index.js";
+import app, { closeServer } from "./index.js";
 import User from "./src/user/User.js";
 import bcrypt from "bcrypt";
 import sequelize from "./src/config/db.js"; 
-
 
 describe("Create an account and using GET, validate account exists", () => {
     test("should respond with a 200 status code", async () => {
@@ -43,6 +42,15 @@ describe("Update the account and using GET, validate the account was updated", (
 })
 
 
-afterAll(async () => {
-    await sequelize.close(); 
+// afterAll(async () => {
+//     await sequelize.close(); 
+// });
+
+// afterAll((done) => {
+//     app.close(done);
+// })
+
+// Use the closeServer function to close the server after all tests
+afterAll((done) => {
+    closeServer(done); // Close the server after all tests
 });

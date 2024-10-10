@@ -11,6 +11,7 @@ import { checkConnection } from './src/config/db.js';
 // Loading environment variables from .env file of my project
 dotenv.config();
 const app = express();
+let server; // Declare a variable to hold the server
 
 // CORS configuration
 app.use(cors({
@@ -30,6 +31,15 @@ app.use('/user', UserRoutes); // Route for user-related endpoints
 app.use((req, res) => {
   res.status(404).send();
 });
+
+// Function to close the server
+export const closeServer = (done) => {
+  if (server) {
+    server.close(done);
+  } else {
+    done();
+  }
+};
 
 // Connect to the database and start the server
 const PORT = process.env.PORT || 5003;
