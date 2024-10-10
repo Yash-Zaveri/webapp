@@ -40,6 +40,11 @@ describe("Update the account and using GET, validate the account was updated", (
     })
 })
 
-// afterAll((done) => {
-//     app.close(done);
-// })
+// // Close the database connection after all tests
+// afterAll(async () => {
+//     await sequelize.close(); // Adjust this if your Sequelize instance is named differently
+// });
+// Close the database connection after all tests
+afterAll(async () => {
+    await sequelize.close(); // Adjust this if your Sequelize instance is named differently
+});

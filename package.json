@@ -16,7 +16,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "test": "jest",
+    "test": "jest --detectOpenHandles",
     "tests": "echo \"Dummy test\"",
     "dev": "npx nodemon index.js"
   },
