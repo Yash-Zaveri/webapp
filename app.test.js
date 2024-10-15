@@ -9,7 +9,8 @@ describe("Create an account and using GET, validate account exists", () => {
         await request(app).post("/user/create-user").send({
             email: "jaygala25@gmail.com",
             password: "123456",
-            firstName: "Jay",
+            firstName: "Jay"
+            
             lastName: "Gala"
         });
 
