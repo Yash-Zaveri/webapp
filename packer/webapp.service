@@ -1,0 +1,17 @@
+[Unit]
+Description=Node.js Web Application
+After=network.target
+
+[Service]
+User=csye6225
+Group=csye6225
+WorkingDirectory=/opt/webapp/webapp
+ExecStart=/usr/bin/node /opt/webapp/webapp/index.js  # Updated to point to index.js
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+SyslogIdentifier=nodejs-app
+
+[Install]
+WantedBy=multi-user.target

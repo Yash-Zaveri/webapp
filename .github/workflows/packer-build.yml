@@ -1,0 +1,49 @@
+name: Packer Image on PR Merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  packer-build:
+    if: github.event.pull_request.merged == true  # This ensures it runs only when PR is merged
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Create .env file from GitHub Secrets
+        run: |
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+          echo "DB_USERNAME=${{ secrets.DB_USERNAME }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "APP_PORT=${{ secrets.APP_PORT }}" >> .env
+
+      - name: Create zip file
+        run: |
+          zip -r project.zip . -x "*.git*" # Zip the entire repository excluding .git
+
+      - name: Set up AWS CLI
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_DEV_GIT_ROLE_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_DEV_GIT_ROLE_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1 # Adjust based on your region
+
+      - name: Set up Packer
+        uses: hashicorp/setup-packer@v2
+        with:
+          version: latest
+
+      - name: Initialize Packer
+        run: packer init packer-template.pkr.hcl
+        working-directory: ./packer # Set the correct working directory for the Packer files
+
+      - name: Run Packer Build
+        run: packer build -force -var "AWS_ACCESS_KEY_ID=${{ secrets.AWS_DEV_GIT_ROLE_ACCESS_KEY_ID }}" -var "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_DEV_GIT_ROLE_SECRET_ACCESS_KEY }}" packer-template.pkr.hcl
+        working-directory: ./packer # Ensure to set the correct working directory for the Packer files

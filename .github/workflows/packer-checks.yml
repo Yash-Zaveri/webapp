@@ -1,0 +1,44 @@
+name: Packer Checks CI
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+  
+jobs:
+  packer-init-fmt-validate:
+    runs-on: ubuntu-latest
+    name: Packer Test
+    steps:
+      - name: checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Set up Packer
+        uses: hashicorp/setup-packer@v2
+        with:
+          version: latest
+
+      - name: Create .env file from GitHub Secrets
+        run: |
+          echo "DB_HOST=${{ secrets.MYSQL_HOST }}" >> .env
+          echo "DB_PORT=${{ secrets.MYSQL_PORT }}" >> .env
+          echo "DB_USERNAME=${{ secrets.MYSQL_USER }}" >> .env
+          echo "DB_PASSWORD=${{ secrets.MYSQL_PASSWORD }}" >> .env
+          echo "DB_NAME=${{ secrets.MYSQL_DATABASE }}" >> .env
+          echo "APP_PORT=${{ secrets.APP_PORT }}" >> .env
+
+      - name: Create zip file
+        run: |
+          zip -r webapp.zip . -x "*.git*" # Zip the entire repository excluding .git
+
+      - name: Initialize Packer
+        run: packer init packer-template.pkr.hcl
+        working-directory: ./packer
+
+      - name: Run Packer fmt
+        run: packer fmt -check -diff packer-template.pkr.hcl 
+        working-directory: ./packer
+
+      - name: Run Packer validate
+        run: packer validate packer-template.pkr.hcl
+        working-directory: ./packer
