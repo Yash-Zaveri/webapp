@@ -28,7 +28,7 @@ jobs:
           zip -r webapp.zip . -x "*.git*" # Zip the entire repository excluding .git
 
       - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v2
         with:
           aws-access-key-id: ${{ secrets.AWS_DEV_GIT_ROLE_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_DEV_GIT_ROLE_SECRET_ACCESS_KEY }}
