@@ -86,17 +86,18 @@ build {
   provisioner "file" {
     source      = "webapp.zip" # Update the path to your zip file
     destination = "/tmp/webapp.zip"
+    generated   = true
   }
 
   # Transfer the systemd service file
   provisioner "file" {
-    source      = "webapp.service" # Update the path to your .service file
+    source      = "packer/webapp.service" # Update the path to your .service file
     destination = "/tmp/webapp.service"
   }
 
   # Transfer the install script
   provisioner "file" {
-    source      = "weapp_mysql.sh" # Update the path to your install script
+    source      = "packer/weapp_mysql.sh" # Update the path to your install script
     destination = "/tmp/weapp_mysql.sh"
   }
 
