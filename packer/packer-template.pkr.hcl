@@ -30,7 +30,7 @@ variable "ssh_username" {
 
 variable "subnet_id" {
   type    = string
-  default = "subnet-0330eac9e146451ca"  # Check your actual subnet ID
+  default = "subnet-0330eac9e146451ca" # Check your actual subnet ID
 }
 
 variable "AWS_ACCESS_KEY_ID" {
@@ -47,15 +47,15 @@ source "amazon-ebs" "ubuntu-ami" {
   ami_name        = "csye6225_custom_ami_${formatdate("YYYYMMDDHHmmss", timestamp())}"
   ami_description = "Custom Ubuntu AMI with Node.js"
   # profile = "Assignment"
-  instance_type   = var.instance_type
-  source_ami      = var.source_ami
-  ssh_username    = var.ssh_username
-  subnet_id       = var.subnet_id
-  ami_regions     = ["us-east-1"]
+  instance_type = var.instance_type
+  source_ami    = var.source_ami
+  ssh_username  = var.ssh_username
+  subnet_id     = var.subnet_id
+  ami_regions   = ["us-east-1"]
 
   # Reference variables for AWS credentials
-  access_key             = var.AWS_ACCESS_KEY_ID
-  secret_key             = var.AWS_SECRET_ACCESS_KEY
+  access_key = var.AWS_ACCESS_KEY_ID
+  secret_key = var.AWS_SECRET_ACCESS_KEY
 
   tags = {
     Name        = "CSYE6225_Custom_AMI"
@@ -72,9 +72,9 @@ source "amazon-ebs" "ubuntu-ami" {
   }
 
   launch_block_device_mappings {
-    device_name          = "/dev/sda1"
-    volume_size          = 25
-    volume_type          = "gp2"
+    device_name           = "/dev/sda1"
+    volume_size           = 25
+    volume_type           = "gp2"
     delete_on_termination = true
   }
 }
@@ -84,19 +84,19 @@ build {
 
   # Transfer the application zip file
   provisioner "file" {
-    source      = "webapp.zip"  # Update the path to your zip file
+    source      = "webapp.zip" # Update the path to your zip file
     destination = "/tmp/webapp.zip"
   }
 
   # Transfer the systemd service file
   provisioner "file" {
-    source      = "webapp.service"  # Update the path to your .service file
+    source      = "webapp.service" # Update the path to your .service file
     destination = "/tmp/webapp.service"
   }
 
   # Transfer the install script
   provisioner "file" {
-    source      = "weapp_mysql.sh"  # Update the path to your install script
+    source      = "weapp_mysql.sh" # Update the path to your install script
     destination = "/tmp/weapp_mysql.sh"
   }
 
@@ -109,6 +109,6 @@ build {
     ]
   }
 
-   
+
 }
 
