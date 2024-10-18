@@ -5,6 +5,7 @@ on:
     types: [closed]
     branches:
       - main
+  workflow_dispatch:    
 
 jobs:
   packer-build:
@@ -26,7 +27,7 @@ jobs:
 
       - name: Create zip file
         run: |
-          zip -r project.zip . -x "*.git*" # Zip the entire repository excluding .git
+          zip -r webapp.zip . -x "*.git*" # Zip the entire repository excluding .git
 
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v2
@@ -41,9 +42,7 @@ jobs:
           version: latest
 
       - name: Initialize Packer
-        run: packer init packer-template.pkr.hcl
-        working-directory: ./packer # Set the correct working directory for the Packer files
+        run: packer init packer/packer-template.pkr.hcl
 
       - name: Run Packer Build
-        run: packer build -force -var "AWS_ACCESS_KEY_ID=${{ secrets.AWS_DEV_GIT_ROLE_ACCESS_KEY_ID }}" -var "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_DEV_GIT_ROLE_SECRET_ACCESS_KEY }}" packer-template.pkr.hcl
-        working-directory: ./packer # Ensure to set the correct working directory for the Packer files
+        run: packer build -force -var "AWS_ACCESS_KEY_ID=${{ secrets.AWS_DEV_GIT_ROLE_ACCESS_KEY_ID }}" -var "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_DEV_GIT_ROLE_SECRET_ACCESS_KEY }}" packer/packer-template.pkr.hcl
