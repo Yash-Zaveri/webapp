@@ -28,10 +28,11 @@ jobs:
           zip -r webapp.zip . -x "*.git*" # Zip the entire repository excluding .git
 
       - name: Set up AWS CLI
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_DEV_GIT_ROLE_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_DEV_GIT_ROLE_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1 # Adjust based on your region
 
       - name: Set up Packer
         uses: hashicorp/setup-packer@v2
@@ -42,4 +43,4 @@ jobs:
         run: packer init packer/packer-template.pkr.hcl
 
       - name: Run Packer Build
-        run: packer build -force -var "AWS_ACCESS_KEY_ID=${{ secrets.AWS_DEV_GIT_ROLE_ACCESS_KEY_ID }}" -var "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_DEV_GIT_ROLE_SECRET_ACCESS_KEY }}" packer/packer-template.pkr.hcl
+        run: packer build -force packer/packer-template.pkr.hcl
