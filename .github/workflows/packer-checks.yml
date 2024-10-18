@@ -36,9 +36,9 @@ jobs:
         working-directory: ./packer
 
       - name: Run Packer fmt
-        run: packer fmt -check -diff packer-template.pkr.hcl 
+        run: packer fmt -check packer-template.pkr.hcl 
         working-directory: ./packer
 
       - name: Run Packer validate
-        run: packer validate packer-template.pkr.hcl
+        run: packer validate -var "AWS_ACCESS_KEY_ID=${{ secrets.AWS_DEV_GIT_ROLE_ACCESS_KEY_ID }}" -var "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_DEV_GIT_ROLE_SECRET_ACCESS_KEY }}" packer-template.pkr.hcl
         working-directory: ./packer
