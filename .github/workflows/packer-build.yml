@@ -7,8 +7,8 @@ on:
 
 jobs:
   packer-build:
-    if: github.event.pull_request.merged == true  # This ensures it runs only when PR is merged
     runs-on: ubuntu-latest
+    name: Packer build
 
     steps:
       - name: Checkout repository
