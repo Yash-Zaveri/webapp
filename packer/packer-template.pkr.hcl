@@ -84,7 +84,7 @@ build {
 
   # Transfer the application zip file
   provisioner "file" {
-    source      = "webapp.zip" # Update the path to your zip file
+    source      = "packer/webapp.zip" # Update the path to your zip file
     destination = "/tmp/webapp.zip"
     generated   = true
   }
