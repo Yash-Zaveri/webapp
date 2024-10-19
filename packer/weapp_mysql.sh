@@ -79,6 +79,7 @@ MYSQL_PASSWORD=Yash@2002
 MYSQL_DATABASE=myapp_db
 PORT=5000
 EOF
+echo "complet .env"
 
 # Navigate to webapp directory and install dependencies
 echo "Navigating to webapp directory..."

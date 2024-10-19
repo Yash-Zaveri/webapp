@@ -46,12 +46,11 @@ source "amazon-ebs" "ubuntu-ami" {
   region          = var.aws_region
   ami_name        = "csye6225_custom_ami_${formatdate("YYYYMMDDHHmmss", timestamp())}"
   ami_description = "Custom Ubuntu AMI with Node.js"
-  # profile = "Assignment"
-  instance_type = var.instance_type
-  source_ami    = var.source_ami
-  ssh_username  = var.ssh_username
-  subnet_id     = var.subnet_id
-  ami_regions   = ["us-east-1"]
+  instance_type   = var.instance_type
+  source_ami      = var.source_ami
+  ssh_username    = var.ssh_username
+  subnet_id       = var.subnet_id
+  ami_regions     = ["us-east-1"]
 
   # Reference variables for AWS credentials
   access_key = var.AWS_ACCESS_KEY_ID
@@ -60,6 +59,7 @@ source "amazon-ebs" "ubuntu-ami" {
   tags = {
     Name        = "CSYE6225_Custom_AMI"
     Environment = "dev"
+    CreatedBy   = "GitUser"
   }
 
   run_tags = {
@@ -84,7 +84,7 @@ build {
 
   # Transfer the application zip file
   provisioner "file" {
-    source      = "webapp.zip" # Update the path to your zip file
+    source      = "packer/webapp.zip" # Update the path to your zip file
     destination = "/tmp/webapp.zip"
     generated   = true
   }

@@ -72,7 +72,7 @@ const router = express.Router();
 
 // Create User API
 router.post(
-  "/create-user",
+  "/v1/create-user",
   [
     body("email").notEmpty().withMessage("email is required").bail().isEmail(),
     body("password").notEmpty().withMessage("password is required"),
@@ -102,7 +102,7 @@ router.post(
 
 // Get User API
 router.get(
-  "/get-user",
+  "/v1/get-user",
   validateRequest,
   dbConnCheck,
   authMiddleware,
@@ -114,7 +114,7 @@ router.get(
 
 // Update User API
 router.put(
-  "/update-user",
+  "/v1/update-user",
   [
     body("password").notEmpty().withMessage("password is required"),
     body("firstName").notEmpty().withMessage("firstName is required"),

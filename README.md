@@ -34,5 +34,3 @@ Open any REST client to do a health check by executing the healthz endpoint.
 
 
 
-# packer-template.pkr.hcl
-

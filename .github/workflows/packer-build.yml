@@ -5,12 +5,12 @@ on:
     types: [closed]
     branches:
       - main
-  workflow_dispatch:    
+  workflow_dispatch:
 
 jobs:
   packer-build:
-    if: github.event.pull_request.merged == true  # This ensures it runs only when PR is merged
     runs-on: ubuntu-latest
+    name: Packer build
 
     steps:
       - name: Checkout repository
@@ -45,4 +45,4 @@ jobs:
         run: packer init packer/packer-template.pkr.hcl
 
       - name: Run Packer Build
-        run: packer build -force -var "AWS_ACCESS_KEY_ID=${{ secrets.AWS_DEV_GIT_ROLE_ACCESS_KEY_ID }}" -var "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_DEV_GIT_ROLE_SECRET_ACCESS_KEY }}" packer/packer-template.pkr.hcl
+        run: packer build -force packer/packer-template.pkr.hcl
