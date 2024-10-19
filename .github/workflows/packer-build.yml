@@ -2,7 +2,9 @@ name: Packer Image on PR Merge
 
 on:
   pull_request:
-    branches: [ "main" ]
+    types: [closed]
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
