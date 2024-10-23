@@ -1,4 +1,3 @@
-
 packer {
   required_plugins {
     amazon = {
@@ -15,7 +14,7 @@ variable "aws_region" {
 
 variable "instance_type" {
   type    = string
-  default = "t2.small"
+  default = "t2.micro"
 }
 
 variable "source_ami" {
@@ -41,7 +40,6 @@ variable "AWS_SECRET_ACCESS_KEY" {
   description = "AWS Secret Access Key"
 }
 
-
 source "amazon-ebs" "ubuntu-ami" {
   region          = var.aws_region
   ami_name        = "csye6225_custom_ami_${formatdate("YYYYMMDDHHmmss", timestamp())}"
@@ -52,7 +50,6 @@ source "amazon-ebs" "ubuntu-ami" {
   subnet_id       = var.subnet_id
   ami_regions     = ["us-east-1"]
 
-  # Reference variables for AWS credentials
   access_key = var.AWS_ACCESS_KEY_ID
   secret_key = var.AWS_SECRET_ACCESS_KEY
 
@@ -82,34 +79,32 @@ source "amazon-ebs" "ubuntu-ami" {
 build {
   sources = ["source.amazon-ebs.ubuntu-ami"]
 
-  # Transfer the application zip file
   provisioner "file" {
-    source      = "packer/webapp.zip" # Update the path to your zip file
+    source      = "packer/webapp.zip"
     destination = "/tmp/webapp.zip"
     generated   = true
   }
 
-  # Transfer the systemd service file
   provisioner "file" {
-    source      = "packer/webapp.service" # Update the path to your .service file
+    source      = "packer/webapp.service"
     destination = "/tmp/webapp.service"
   }
 
-  # Transfer the install script
   provisioner "file" {
-    source      = "packer/weapp_mysql.sh" # Update the path to your install script
-    destination = "/tmp/weapp_mysql.sh"
+    source      = "packer/webapp_setup.sh"
+    destination = "/tmp/webapp_setup.sh"
   }
 
-  # Run the install script, which will handle user creation, MySQL setup, application setup, and systemd service setup
   provisioner "shell" {
     inline = [
-      "echo 'Setting up and running the weapp_mysql.sh script...'",
-      "chmod +x /tmp/weapp_mysql.sh",
-      "sudo /tmp/weapp_mysql.sh"
+      "echo 'Setting up and running the webapp_setup.sh script...'",
+      "chmod +x /tmp/webapp_setup.sh",
+      "sudo /tmp/webapp_setup.sh"
     ]
   }
 
-
+  post-processor "manifest" {
+    output     = "packer-manifest.json"
+    strip_path = true
+  }
 }
-
