@@ -11,7 +11,8 @@
               "file_path": "/opt/webapp/webapp/logs/csye6225.log",
               "log_group_name": "csye6225",
               "log_stream_name": "webapp",
-              "timezone":"UTC"
+              "timestamp_format": "%Y-%m-%d %H:%M:%S",
+              "timezone": "LOCAL"
 
             }
           ]
