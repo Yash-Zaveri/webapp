@@ -27,8 +27,8 @@ jobs:
 
       - name: Create zip file
         run: |
-          zip -r webapp.zip . -x "*.git*" # Zip the entire repository excluding .git
-
+          cd packer && zip -r webapp.zip ../* -x "../.git*" # Zip everything except .git
+      
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -42,10 +42,10 @@ jobs:
           version: latest
 
       - name: Initialize Packer
-        run: packer init packer/packer-template.pkr.hcl
+        run: packer init packer-template.pkr.hcl
 
       - name: Run Packer Build
-        run: packer build -force -var "AWS_ACCESS_KEY_ID=${{ secrets.AWS_GIT_ROLE_ACCESS_KEY_ID }}" -var "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_GIT_ROLE_SECRET_ACCESS_KEY }}" packer/packer-template.pkr.hcl
+        run: packer build -force -var "AWS_ACCESS_KEY_ID=${{ secrets.AWS_GIT_ROLE_ACCESS_KEY_ID }}" -var "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_GIT_ROLE_SECRET_ACCESS_KEY }}" packer-template.pkr.hcl
 
       - name: Share AMI with DEMO account
         run: |
