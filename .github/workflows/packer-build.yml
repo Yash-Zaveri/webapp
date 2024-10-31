@@ -27,7 +27,8 @@ jobs:
 
       - name: Create zip file
         run: |
-          cd packer && zip -r webapp.zip . -x ".git*" # Zip everything in 'packer' except .git
+          zip -r webapp.zip . -x ".git*" # Zip everything in the webapp directory except .git
+          mv webapp.zip packer/ # Move the zip file into the packer directory
       
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v2

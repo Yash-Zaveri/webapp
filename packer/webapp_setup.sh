@@ -37,26 +37,29 @@ sudo dpkg -i -E ./amazon-cloudwatch-agent.deb
 echo "Checking if /tmp/webapp.zip exists..."
 if [ -f "/tmp/webapp.zip" ]; then
     echo "File exists, proceeding with unzip..."
-    sudo mkdir -p /opt/webapp
-    sudo unzip /tmp/webapp.zip -d /opt/webapp
+    sudo mkdir -p /opt
+    sudo unzip /tmp/webapp.zip -d /opt
     echo "Setting ownership for /opt/webapp..."
-    sudo chown -R csye6225:csye6225 /opt/webapp
+    sudo chown -R csye6225:csye6225 /opt
 else
     echo "webapp.zip does not exist in /tmp. Check file transfer steps or file permissions."
     exit 1
 fi
 
-echo "Navigating to webapp directory..."
+echo "Navigating to /opt/webapp directory..."
 cd /opt/webapp
 
-rm -rf node_modules
-
-npm install
-
-npm install bcrypt@5.1.1
-
-npm install dotenv
-
+# Check if package.json exists
+if [ -f "package.json" ]; then
+    echo "Installing npm dependencies..."
+    rm -rf node_modules
+    npm install
+    npm install bcrypt@5.1.1
+    npm install dotenv
+else
+    echo "Error: package.json not found in /opt/webapp. Ensure it exists in the webapp.zip file."
+    exit 1
+fi
 
 
 echo "Starting CloudWatch Agent with custom config..."
