@@ -47,7 +47,7 @@ else
 fi
 
 echo "Navigating to webapp directory..."
-cd /opt/webapp/webapp
+cd /opt/webapp
 
 rm -rf node_modules
 
