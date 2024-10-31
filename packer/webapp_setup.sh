@@ -64,7 +64,7 @@ fi
 
 echo "Starting CloudWatch Agent with custom config..."
 sudo /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl \
-    -a fetch-config -m ec2 -c file:/opt/webapp/webapp/packer/cloudwatch-config.json -s
+    -a fetch-config -m ec2 -c file:/opt/packer/cloudwatch-config.json -s
 
 
 echo "Copying systemd service file and enabling the service..."
