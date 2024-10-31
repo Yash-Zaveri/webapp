@@ -95,6 +95,13 @@ build {
     destination = "/tmp/webapp_setup.sh"
   }
 
+  # New file provisioner for CloudWatch config
+
+  provisioner "file" {
+    source      = "packer/cloudwatch-config.json"
+    destination = "/tmp/cloudwatch-config.json"
+  }
+
   provisioner "shell" {
     inline = [
       "echo 'Setting up and running the webapp_setup.sh script...'",
