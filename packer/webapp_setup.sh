@@ -46,8 +46,8 @@ else
     exit 1
 fi
 
-echo "Navigating to /opt/webapp directory..."
-cd /opt/webapp
+echo "Navigating to /opt directory..."
+cd /opt
 
 # Check if package.json exists
 if [ -f "package.json" ]; then
