@@ -143,6 +143,7 @@ router.get(
     const apiStart = Date.now();
         try {
           delete req.user.password;
+          logger.info("Getting user info.");
           setSuccessResponse(req.user, res, 200);
       } catch (error) {
           logger.error("Error fetching user: ", error);
@@ -177,6 +178,7 @@ router.put(
 
           const dbStart = Date.now();
           await User.update(toUpdate, { where: { id: req.user.id } });
+          logger.info("Updatinging user");
           client.timing('db.query.updateUser', Date.now() - dbStart);
 
           res.status(204).send();
