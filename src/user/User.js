@@ -24,6 +24,18 @@ const User = sequelize.define('user_info', {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  verificationToken: {
+    type: DataTypes.STRING,
+    allowNull: true,  // This can be null initially, as it's generated when needed
+  },
+  verificationTokenExpiration: {
+    type: DataTypes.DATE,
+    allowNull: true,  // This can be null initially, as it's set when the token is generated
+  },
+  verified: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
 }, {
   timestamps: true,
   freezeTableName: true,
@@ -32,3 +44,6 @@ const User = sequelize.define('user_info', {
 });
 
 export default User;
+
+
+

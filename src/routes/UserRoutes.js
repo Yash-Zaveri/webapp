@@ -10,7 +10,67 @@ import Image from "../user/Image.js"; // Import the Image model for database int
 import logger from '../services/logger.js'; // Import logger utility
 import client from '../services/statsdClient.js'; // Import metrics client
 import { setSuccessResponse, setErrorResponse } from '../services/responseUtil.js'; // Create a separate file for response utility functions
+import crypto from "crypto";
+import { SNSClient, PublishCommand } from '@aws-sdk/client-sns'; // Correct import syntax
+const snsClient = new SNSClient({ region: process.env.AWS_REGION }); // Replace 'your-region' with actual region
+import { Op } from "sequelize";
 
+
+
+const checkVerified = (req, res, next) => {
+
+ if (!req.user.verified) {
+  logger.warn(`User ${req.user.email} attempted access without verification.`);
+  return res.status(403).json({ message: "User account is not verified. Please check your email for verification link." });
+ }
+  next();
+};
+
+
+// Email Verification Function
+const verifyEmail = async (req, res) => {
+  const { token } = req.query;
+
+  if (!token) {
+    logger.warn("Verification failed: No token provided in query parameters");
+    return res.status(400).json({ error: "Verification token is required" });
+  }
+
+  try {
+    logger.info(`Received verification request for token: ${token}`);
+    const user = await User.findOne({
+      where: {
+        verificationToken: token,
+        verificationTokenExpiration: {
+          [Op.gt]: new Date(),
+        },
+      },
+    });
+
+    if (!user) {
+      logger.warn(
+        `Verification failed: Invalid or expired token. Token: ${token}`
+      );
+      return res.status(400).json({ error: "Invalid or expired token" });
+    }
+
+    user.verified = true;
+    user.verificationToken = null;
+    user.verificationTokenExpiration = null;
+    await user.save();
+
+    logger.info(`User ${user.email} verified successfully`);
+    return res.status(200).json({ message: "Email verified successfully" });
+  } catch (error) {
+    logger.error(
+      `Error during verification for token ${token}: ${error.message}`
+    );
+
+    logger.error("Error during verification:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+  
+};
 
 
 // Middlewares
@@ -90,7 +150,6 @@ const router = express.Router();
 
 // Apply the metrics middleware to all routes
 // router.use(metricsMiddleware);
-
 // Create User API
 router.post(
   "/v1/create-user",
@@ -105,9 +164,21 @@ router.post(
   async (req, res) => {
     client.increment('api.createUser.count');
     const apiStart = Date.now();
-    try {
 
+    try {
       logger.info("Creating user");
+
+      // Check if the email already exists
+      const existingUser = await User.findOne({ where: { email: req.body.email } });
+      if (existingUser) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+      logger.info("Not existing user user");
+// Generate a verification token with expiration (2 minutes)
+const verification_Token = crypto.randomBytes(20).toString("hex");
+const verificationTokenExpires = new Date(Date.now() + 12000); // 2-minute expiration
+logger.info("verificationToken user");
+      // Hash the password and create the user
       const hash = await bcrypt.hash(req.body.password.toString(), 13);
       const dbStart = Date.now();
       const user = await User.create({
@@ -115,21 +186,58 @@ router.post(
         password: hash,
         first_name: req.body.firstName,
         last_name: req.body.lastName,
+        //verified: false, // Set verified status to false initially
+        verificationToken: verification_Token, // Add this to your model
+        verificationTokenExpiration: verificationTokenExpires
       });
-
+      logger.info("perform user.create");
       client.timing('db.query.createUser', Date.now() - dbStart);
 
+      
+// error in this part of the code
+// Publish message to SNS
+if (process.env.SNS_TOPIC_ARN) {
+  const snsMessage = {
+    email: user.email,
+    verificationToken: verification_Token,
+        id : user.id,
+  };
+
+  const params = {
+    Message: JSON.stringify(snsMessage),
+    TopicArn: process.env.SNS_TOPIC_ARN,
+  };
+  logger.info("created param");
+  try {
+        await snsClient.send(new PublishCommand(params));
+        logger.info(`SNS message published for user: ${user.email}`);
+        client.increment("user.post.sns");
+      } catch (snsError) {
+        logger.error("Error publishing to SNS", snsError);
+        // Handle SNS failure without affecting user creation
+      }
+    }
+    else {
+      logger.warn("SNS_TOPIC_ARN not defined in environment variables");
+    }
+      // Remove password from response
       delete user.dataValues.password;
+      
       setSuccessResponse(user, res, 201);
     } catch (error) {
-      logger.error("Error creating user: ", error);
-      setErrorResponse(error, res, 400);
-    }
-    finally {
+      if (error.name === "SequelizeUniqueConstraintError") {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+      logger.error("Error creating user:", error);
+    return res.status(500).send();
+      
+    } finally {
       client.timing('api.createUser.duration', Date.now() - apiStart);
-  }
+    }
   }
 );
+
+router.get('/v1/user/self/verify', verifyEmail);
 
 
 // Get User API
@@ -138,6 +246,7 @@ router.get(
   validateRequest,
   dbConnCheck,
   authMiddleware,
+  //checkVerified, // New middleware to check verification
   async (req, res) => {
     client.increment('api.getUser.count');
     const apiStart = Date.now();
@@ -165,6 +274,7 @@ router.put(
   validateRequest,
   dbConnCheck,
   authMiddleware,
+  checkVerified, // New middleware to check verification
   async (req, res) => {
       client.increment('api.updateUser.count');
       const apiStart = Date.now();
@@ -197,7 +307,7 @@ router.put(
 const upload = multer(); // Initialize multer for file uploads
 
 // Route to upload or update a profile picture
-router.post("/v1/user/self/pic", authMiddleware, upload.single("profilePic"), async (req, res) => {
+router.post("/v1/user/self/pic", authMiddleware, upload.single("profilePic"), checkVerified, async (req, res) => {
   try {
     logger.info("Upload profile picture request");
     client.increment('post.user.profilepic.upload');
@@ -247,7 +357,7 @@ router.post("/v1/user/self/pic", authMiddleware, upload.single("profilePic"), as
 
 
 // Route to delete a profile picture
-router.delete("/v1/user/self/pic", authMiddleware, async (req, res) => {
+router.delete("/v1/user/self/pic", authMiddleware, checkVerified, async (req, res) => {
   client.increment('api.deleteProfilePic.count');
   const apiStart = Date.now();
 
@@ -283,7 +393,7 @@ router.delete("/v1/user/self/pic", authMiddleware, async (req, res) => {
 
 
 // Route to retrieve a profile picture
-router.get("/v1/user/self/pic", authMiddleware, async (req, res) => {
+router.get("/v1/user/self/pic", authMiddleware, checkVerified, async (req, res) => {
   client.increment('api.getProfilePic.count');
   const apiStart = Date.now();
 
