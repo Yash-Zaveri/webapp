@@ -3,12 +3,12 @@
     {
       "name": "ubuntu-ami",
       "builder_type": "amazon-ebs",
-      "build_time": 1730839600,
+      "build_time": 1731788832,
       "files": null,
-      "artifact_id": "us-east-1:ami-0661a6e807c5c02c0",
-      "packer_run_uuid": "20ced496-5ca9-7616-d50c-ea50ecae48ba",
+      "artifact_id": "us-east-1:ami-07113b60d5bccd04f",
+      "packer_run_uuid": "1169205c-a09f-4d01-0653-26695be712a9",
       "custom_data": null
     }
   ],
-  "last_run_uuid": "20ced496-5ca9-7616-d50c-ea50ecae48ba"
+  "last_run_uuid": "1169205c-a09f-4d01-0653-26695be712a9"
 }
