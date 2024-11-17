@@ -41,9 +41,6 @@ const verifyEmail = async (req, res) => {
     const user = await User.findOne({
       where: {
         verificationToken: token,
-        verificationTokenExpiration: {
-          [Op.gt]: new Date(),
-        },
       },
     });
 
@@ -54,6 +51,22 @@ const verifyEmail = async (req, res) => {
       return res.status(400).json({ error: "Invalid or expired token" });
     }
 
+    const currentTime = new Date().getTime();
+    const veritime = new Date(user.verificationTokenExpiration).getTime();
+    const veritimePlus2Minutes = veritime + 2 * 60 * 1000;
+    const isExpired = currentTime > veritimePlus2Minutes;
+    console.log(`AT email varification part expiration time ): ${user.verificationTokenExpiration}`);
+    console.log(`Type of Retrieved Expiration: ${typeof user.verificationTokenExpiration}`); 
+    console.log(`current time: ${Date()}`);
+    console.log(`${currentTime}`);
+    console.log(`${veritime}`);
+    console.log(`${veritimePlus2Minutes}`);
+
+    
+        if (isExpired) {
+          console.log('Verification token has expired.');
+          return res.status(400).json({ message: "EXPIRED!" })
+      } else {
     user.verified = true;
     user.verificationToken = null;
     user.verificationTokenExpiration = null;
@@ -61,6 +74,7 @@ const verifyEmail = async (req, res) => {
 
     logger.info(`User ${user.email} verified successfully`);
     return res.status(200).json({ message: "Email verified successfully" });
+  }
   } catch (error) {
     logger.error(
       `Error during verification for token ${token}: ${error.message}`
@@ -176,7 +190,7 @@ router.post(
       logger.info("Not existing user user");
 // Generate a verification token with expiration (2 minutes)
 const verification_Token = crypto.randomBytes(20).toString("hex");
-const verificationTokenExpires = new Date(Date.now() + 12000); // 2-minute expiration
+const verificationTokenExpires = new Date(Date.now() + 2 * 60 * 1000); // 2-minute expiration
 logger.info("verificationToken user");
       // Hash the password and create the user
       const hash = await bcrypt.hash(req.body.password.toString(), 13);
