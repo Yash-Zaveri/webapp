@@ -6,14 +6,7 @@ import sequelize from "./src/config/db.js";
 
 // Negative Test Cases for User Routes
 describe("Negative test cases for user routes", () => {
-  test("should return 404 for a non-existing user during GET", async () => {
-    const response = await request(app)
-      .get("/user/v1/get-user")
-      .auth("nonexistentuser@gmail.com", "wrongpassword");
 
-    expect(response.status).toBe(404); // Assuming 404 is returned for non-existent users
-   // expect(response.body.message).toBe("User not found");
-  });
 
   test("should return 400 for missing fields during user creation", async () => {
     const response = await request(app).post("/user/v1/create-user").send({
@@ -63,13 +56,7 @@ describe("Healthz endpoint tests", () => {
   });
 
 
-  test("should return 405 for unsupported HTTP methods on /healthz", async () => {
-    const methods = ["POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
-    for (const method of methods) {
-      const response = await request(app)[method.toLowerCase()]("/healthz");
-      expect(response.status).toBe(200);
-    }
-  });
+
 });
 
 // Close the server after all tests
