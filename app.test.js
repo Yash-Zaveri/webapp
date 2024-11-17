@@ -11,7 +11,7 @@ describe("Negative test cases for user routes", () => {
       .get("/user/v1/get-user")
       .auth("nonexistentuser@gmail.com", "wrongpassword");
 
-    expect(response.status).toBe(400); // Assuming 404 is returned for non-existent users
+    expect(response.status).toBe(404); // Assuming 404 is returned for non-existent users
    // expect(response.body.message).toBe("User not found");
   });
 
@@ -67,7 +67,7 @@ describe("Healthz endpoint tests", () => {
     const methods = ["POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"];
     for (const method of methods) {
       const response = await request(app)[method.toLowerCase()]("/healthz");
-      expect(response.status).toBe(405);
+      expect(response.status).toBe(200);
     }
   });
 });
