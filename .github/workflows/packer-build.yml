@@ -45,8 +45,8 @@ jobs:
             echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_GIT_ROLE_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
           elif [ "${ACCOUNT}" == "demo" ]; then
             echo "Using demo credentials"
-            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_DEMO_ACCESS_KEY_ID }}" >> .env
-            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_DEMO_SECRET_ACCESS_KEY }}" >> .env
+            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_DEMO_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_DEMO_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
           else
             echo "Unknown environment: ${ACCOUNT}"
             exit 1
