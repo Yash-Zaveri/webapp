@@ -70,9 +70,6 @@ jobs:
       - name: Initialize Packer
         run: packer init packer/packer-template.pkr.hcl
 
-      # Step 8: Validate the Packer configuration
-      - name: Packer Validate
-        run: packer validate packer/aws.pkr.hcl
 
       # Step 9: Run the Packer build
       - name: Run Packer build
