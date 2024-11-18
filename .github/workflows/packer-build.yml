@@ -10,7 +10,7 @@ on:
 jobs:
   packer-build:
     runs-on: ubuntu-latest
-    name: Packer build
+    name: Packer Build and Update Infra
 
     steps:
       - name: Checkout repository
@@ -27,9 +27,9 @@ jobs:
 
       - name: Create zip file
         run: |
-          zip -r webapp.zip . -x ".git*" # Zip everything in 'packer' except .git
+          zip -r webapp.zip . -x ".git*" # Zip everything except .git
           mv webapp.zip packer/ # Move the zip file into the packer directory
-      
+
       - name: Set up AWS CLI
         uses: aws-actions/configure-aws-credentials@v2
         with:
@@ -52,3 +52,68 @@ jobs:
         run: |
           AMI_ID=$(jq -r '.builds[-1].artifact_id' packer-manifest.json | cut -d ":" -f2)
           aws ec2 modify-image-attribute --image-id $AMI_ID --launch-permission "Add=[{UserId=${{ secrets.DEMO_ACCOUNT_ID }}}]"
+
+      # [NEW] Check for Existing Launch Template
+      - name: Check for Existing Launch Template
+        id: check-template
+        run: |
+          aws ec2 describe-launch-templates \
+            --launch-template-names "${{ secrets.LAUNCH_TEMPLATE_NAME }}" > /dev/null 2>&1 || echo "NO_TEMPLATE"
+
+      # [NEW] Skip Infra Update if No Launch Template
+      - name: Skip Infra Update if No Launch Template
+        if: steps.check-template.outputs.no_template == 'NO_TEMPLATE'
+        run: echo "No launch template found. Skipping update and instance refresh."
+
+      # [NEW] Create New Launch Template Version
+      - name: Create New Launch Template Version
+        if: steps.check-template.outputs.no_template != 'NO_TEMPLATE'
+        run: |
+          AMI_ID=$(jq -r '.builds[-1].artifact_id' packer-manifest.json | cut -d ":" -f2)
+          aws ec2 create-launch-template-version \
+            --launch-template-name ${{ secrets.LAUNCH_TEMPLATE_NAME }} \
+            --version-description "Updated with AMI $AMI_ID" \
+            --launch-template-data "{\"ImageId\":\"$AMI_ID\"}" \
+            --query 'LaunchTemplateVersion.VersionNumber' \
+            --output text
+
+      # [NEW] Update Auto Scaling Group
+      - name: Update Auto Scaling Group
+        if: steps.check-template.outputs.no_template != 'NO_TEMPLATE'
+        run: |
+          LATEST_VERSION=$(aws ec2 describe-launch-templates \
+            --launch-template-names ${{ secrets.LAUNCH_TEMPLATE_NAME }} \
+            --query 'LaunchTemplates[0].LatestVersionNumber' \
+            --output text)
+          aws autoscaling update-auto-scaling-group \
+            --auto-scaling-group-name ${{ secrets.AUTOSCALING_GROUP_NAME }} \
+            --launch-template "LaunchTemplateName=${{ secrets.LAUNCH_TEMPLATE_NAME }},Version=$LATEST_VERSION"
+
+      # [NEW] Start Instance Refresh
+      - name: Start Instance Refresh
+        if: steps.check-template.outputs.no_template != 'NO_TEMPLATE'
+        run: |
+          INSTANCE_REFRESH_ID=$(aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name ${{ secrets.AUTOSCALING_GROUP_NAME }} \
+            --query 'InstanceRefreshId' \
+            --output text)
+          echo "INSTANCE_REFRESH_ID=$INSTANCE_REFRESH_ID" >> $GITHUB_ENV
+
+      # [NEW] Wait for Instance Refresh
+      - name: Wait for Instance Refresh
+        if: steps.check-template.outputs.no_template != 'NO_TEMPLATE'
+        run: |
+          STATUS="InProgress"
+          while [[ "$STATUS" == "InProgress" ]]; do
+            echo "Waiting for instance refresh to complete..."
+            sleep 30
+            STATUS=$(aws autoscaling describe-instance-refreshes \
+              --auto-scaling-group-name ${{ secrets.AUTOSCALING_GROUP_NAME }} \
+              --query "InstanceRefreshes[?InstanceRefreshId=='$INSTANCE_REFRESH_ID'].Status" \
+              --output text)
+          done
+          if [[ "$STATUS" != "Successful" ]]; then
+            echo "Instance refresh failed with status: $STATUS"
+            exit 1
+          fi
+          echo "Instance refresh completed successfully."
