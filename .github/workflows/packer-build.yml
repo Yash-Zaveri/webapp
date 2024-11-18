@@ -91,7 +91,7 @@ jobs:
       # Step 10: Extract AMI ID from Packer Manifest
       - name: Extract AMI ID
         run: |
-          AMI_ID=$(jq -r '.builds[0].artifact_id' packer-manifest.json | cut -d ":" -f2)
+          AMI_ID=$(jq -r '.builds[0].artifact_id' packer-manifest.json | cut -d: -f2)
           echo "Extracted AMI ID: $AMI_ID"
           echo "AMI_ID=$AMI_ID" >> $GITHUB_ENV
 
@@ -101,7 +101,7 @@ jobs:
           aws ec2 create-launch-template-version \
             --launch-template-name web-app-launch-template \
             --version-description "New version with updated AMI" \
-            --source-version 1 \
+            --source-version '$Latest' \
             --launch-template-data '{"ImageId":"'"$AMI_ID"'"}'
 
       # Step 12: Update Auto Scaling Group
@@ -113,7 +113,7 @@ jobs:
             --output text)
           aws autoscaling update-auto-scaling-group \
             --auto-scaling-group-name csye6225 \
-            --launch-template "LaunchTemplateName=web-app-launch-template,Version=$LATEST_VERSION"
+            --launch-template "LaunchTemplateName=web-app-launch-template,Version=$Latest"
 
       # Step 13: Initiate Instance Refresh
       - name: Start Instance Refresh
