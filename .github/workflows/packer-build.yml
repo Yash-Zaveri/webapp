@@ -45,8 +45,8 @@ jobs:
             echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_GIT_ROLE_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
           elif [ "${ACCOUNT}" == "demo" ]; then
             echo "Using demo credentials"
-            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_DEMO_ACCESS_KEY_ID }}" >> $GITHUB_ENV
-            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_DEMO_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_DEMO_ACCESS_KEY_ID }}" >> .env
+            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_DEMO_SECRET_ACCESS_KEY }}" >> .env
           else
             echo "Unknown environment: ${ACCOUNT}"
             exit 1
@@ -74,7 +74,7 @@ jobs:
       # Step 9: Run the Packer build
       - name: Run Packer build
         run: |
-          packer build -var "AWS_ACCESS_KEY_ID=${{ env.AWS_ACCESS_KEY_ID }}" \
+          packer build -force -var "AWS_ACCESS_KEY_ID=${{ env.AWS_ACCESS_KEY_ID }}" \
                        -var "AWS_SECRET_ACCESS_KEY=${{ env.AWS_SECRET_ACCESS_KEY }}" \
                        packer/packer-template.pkr.hcl
           cp packer-manifest.json ./
@@ -90,7 +90,7 @@ jobs:
       # Step 10: Extract AMI ID from Packer Manifest
       - name: Extract AMI ID
         run: |
-          AMI_ID=$(jq -r '.builds[-1].artifact_id' packer-manifest.json | cut -d ":" -f2)
+          AMI_ID=$(jq -r '.builds[0].artifact_id' packer-manifest.json | cut -d ":" -f2)
           echo "Extracted AMI ID: $AMI_ID"
           echo "AMI_ID=$AMI_ID" >> $GITHUB_ENV
 
