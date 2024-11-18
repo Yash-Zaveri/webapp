@@ -76,7 +76,7 @@ jobs:
         run: |
           packer build -var "AWS_ACCESS_KEY_ID=${{ env.AWS_ACCESS_KEY_ID }}" \
                        -var "AWS_SECRET_ACCESS_KEY=${{ env.AWS_SECRET_ACCESS_KEY }}" \
-                       packer/aws.pkr.hcl
+                       packer/packer-template.pkr.hcl
           cp packer-manifest.json ./
 
      
