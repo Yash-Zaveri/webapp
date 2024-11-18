@@ -77,7 +77,8 @@ jobs:
           packer build -force -var "AWS_ACCESS_KEY_ID=${{ env.AWS_ACCESS_KEY_ID }}" \
                        -var "AWS_SECRET_ACCESS_KEY=${{ env.AWS_SECRET_ACCESS_KEY }}" \
                        packer/packer-template.pkr.hcl
-          cp packer-manifest.json ./
+          
+      # cp packer-manifest.json ./
 
      
       # # Step 9.2: Share AMI with the DEMO account

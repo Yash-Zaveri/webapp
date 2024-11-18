@@ -29,7 +29,8 @@ variable "ssh_username" {
 
 variable "subnet_id" {
   type    = string
-  default = "subnet-01363cf083f361622" # Check your actual subnet ID
+  default = "subnet-01363cf083f361622" # Check your actual subnet ID {Demo account}
+  # default = "subnet-0330eac9e146451ca" # Dev account
 }
 
 variable "AWS_ACCESS_KEY_ID" {
