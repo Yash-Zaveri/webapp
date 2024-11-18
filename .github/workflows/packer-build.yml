@@ -10,13 +10,18 @@ on:
 jobs:
   packer-build:
     runs-on: ubuntu-latest
-    name: Packer build
+    name: Packer Build and Update Infra
+
+    env:
+      ACCOUNT: ${{ secrets.ACCOUNT }} # Define ACCOUNT variable to switch between dev and demo
 
     steps:
-      - name: Checkout repository
+      # Step 1: Checkout the repository
+      - name: Checkout Repository
         uses: actions/checkout@v3
 
-      - name: Create .env file from GitHub Secrets
+      # Step 2: Create .env file from GitHub Secrets
+      - name: Create .env File
         run: |
           echo "DB_HOST=${{ secrets.DB_HOST }}" >> .env
           echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
@@ -25,30 +30,120 @@ jobs:
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
           echo "APP_PORT=${{ secrets.APP_PORT }}" >> .env
 
-      - name: Create zip file
+      # Step 3: Create a zip file for the web application
+      - name: Create Zip File
         run: |
-          zip -r webapp.zip . -x ".git*" # Zip everything in 'packer' except .git
+          zip -r webapp.zip . -x ".git*" # Zip everything except .git
           mv webapp.zip packer/ # Move the zip file into the packer directory
-      
-      - name: Set up AWS CLI
+
+      # Step 4: Configure AWS credentials based on the environment
+      - name: Configure AWS Credentials
+        run: |
+          if [ "${ACCOUNT}" == "dev" ]; then
+            echo "Using dev credentials"
+            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_GIT_ROLE_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_GIT_ROLE_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+          elif [ "${ACCOUNT}" == "demo" ]; then
+            echo "Using demo credentials"
+            echo "AWS_ACCESS_KEY_ID=${{ secrets.AWS_DEMO_ACCESS_KEY_ID }}" >> $GITHUB_ENV
+            echo "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_DEMO_SECRET_ACCESS_KEY }}" >> $GITHUB_ENV
+          else
+            echo "Unknown environment: ${ACCOUNT}"
+            exit 1
+          fi
+
+      # Step 5: Set AWS credentials for the selected environment
+      - name: Set AWS Credentials
         uses: aws-actions/configure-aws-credentials@v2
         with:
-          aws-access-key-id: ${{ secrets.AWS_DEV_GIT_ROLE_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_DEV_GIT_ROLE_SECRET_ACCESS_KEY }}
+          aws-access-key-id: ${{ env.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ env.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-east-1 # Adjust based on your region
 
+      # Step 6: Set up Packer
       - name: Set up Packer
         uses: hashicorp/setup-packer@v2
         with:
           version: latest
 
+      # Step 7: Initialize Packer
       - name: Initialize Packer
         run: packer init packer/packer-template.pkr.hcl
 
-      - name: Run Packer Build
-        run: packer build -force -var "AWS_ACCESS_KEY_ID=${{ secrets.AWS_GIT_ROLE_ACCESS_KEY_ID }}" -var "AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_GIT_ROLE_SECRET_ACCESS_KEY }}" packer/packer-template.pkr.hcl
+      # Step 8: Validate the Packer configuration
+      - name: Packer Validate
+        run: packer validate packer/aws.pkr.hcl
 
-      - name: Share AMI with DEMO account
+      # Step 9: Run the Packer build
+      - name: Run Packer build
+        run: |
+          packer build -var "AWS_ACCESS_KEY_ID=${{ env.AWS_ACCESS_KEY_ID }}" \
+                       -var "AWS_SECRET_ACCESS_KEY=${{ env.AWS_SECRET_ACCESS_KEY }}" \
+                       packer/aws.pkr.hcl
+          cp packer-manifest.json ./
+
+     
+      # # Step 9.2: Share AMI with the DEMO account
+      # - name: Share AMI with DEMO Account
+      #   run: |
+      #     AMI_ID=$(jq -r '.builds[-1].artifact_id' packer-manifest.json | cut -d ":" -f2)
+      #     aws ec2 modify-image-attribute --image-id $AMI_ID --launch-permission "Add=[{UserId=${{ secrets.DEMO_ACCOUNT_ID }}}]"
+
+
+      # Step 10: Extract AMI ID from Packer Manifest
+      - name: Extract AMI ID
         run: |
           AMI_ID=$(jq -r '.builds[-1].artifact_id' packer-manifest.json | cut -d ":" -f2)
-          aws ec2 modify-image-attribute --image-id $AMI_ID --launch-permission "Add=[{UserId=${{ secrets.DEMO_ACCOUNT_ID }}}]"
+          echo "Extracted AMI ID: $AMI_ID"
+          echo "AMI_ID=$AMI_ID" >> $GITHUB_ENV
+
+      # Step 11: Create a New Launch Template Version
+      - name: Create New Launch Template Version
+        run: |
+          aws ec2 create-launch-template-version \
+            --launch-template-name web-app-launch-template \
+            --version-description "New version with updated AMI" \
+            --source-version 1 \
+            --launch-template-data '{"ImageId":"'"$AMI_ID"'"}'
+
+      # Step 12: Update Auto Scaling Group
+      - name: Update Auto Scaling Group with Latest Launch Template Version
+        run: |
+          LATEST_VERSION=$(aws ec2 describe-launch-template-versions \
+            --launch-template-name web-app-launch-template \
+            --query 'LaunchTemplateVersions[-1].VersionNumber' \
+            --output text)
+          aws autoscaling update-auto-scaling-group \
+            --auto-scaling-group-name csye6225 \
+            --launch-template "LaunchTemplateName=web-app-launch-template,Version=$LATEST_VERSION"
+
+      # Step 13: Initiate Instance Refresh
+      - name: Start Instance Refresh
+        run: |
+          REFRESH_ID=$(aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name csye6225 \
+            --preferences '{"MinHealthyPercentage": 90, "InstanceWarmup": 300}' \
+            --query 'InstanceRefreshId' \
+            --output text)
+          echo "Instance Refresh ID: $REFRESH_ID"
+          echo "REFRESH_ID=$REFRESH_ID" >> $GITHUB_ENV
+
+      # Step 14: Wait for Instance Refresh Completion
+      - name: Wait for Instance Refresh to Complete
+        run: |
+          STATUS="InProgress"
+          while [ "$STATUS" == "InProgress" ]; do
+            STATUS=$(aws autoscaling describe-instance-refreshes \
+              --auto-scaling-group-name csye6225 \
+              --query 'InstanceRefreshes[?InstanceRefreshId==`'"$REFRESH_ID"'`].Status' \
+              --output text)
+            echo "Current Status: $STATUS"
+            if [ "$STATUS" == "Successful" ]; then
+              echo "Instance refresh completed successfully."
+              break
+            elif [ "$STATUS" == "Failed" ]; then
+              echo "Instance refresh failed."
+              exit 1
+            fi
+            sleep 60
+          done

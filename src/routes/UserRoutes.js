@@ -19,7 +19,7 @@ import { Op } from "sequelize";
 
 const checkVerified = (req, res, next) => {
 
- if (!req.user.verified) {
+ if (!req.user.verified || req.user.verified === false) {
   logger.warn(`User ${req.user.email} attempted access without verification.`);
   return res.status(403).json({ message: "User account is not verified. Please check your email for verification link." });
  }
@@ -260,7 +260,7 @@ router.get(
   validateRequest,
   dbConnCheck,
   authMiddleware,
-  //checkVerified, // New middleware to check verification
+  checkVerified, // New middleware to check verification
   async (req, res) => {
     client.increment('api.getUser.count');
     const apiStart = Date.now();
