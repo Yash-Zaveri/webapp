@@ -107,14 +107,14 @@ jobs:
       # Step 12: Update Auto Scaling Group
       - name: Update Auto Scaling Group with Latest Launch Template Version
         run: |
-          LATEST_VERSION=$(aws ec2 describe-launch-template-versions \
-            --launch-template-name web-app-launch-template \
-            --query 'LaunchTemplateVersions[-1].VersionNumber' \
-            --output text)
           aws autoscaling update-auto-scaling-group \
             --auto-scaling-group-name csye6225 \
-            --launch-template "LaunchTemplateName=web-app-launch-template,Version=$Latest"
+            --launch-template "LaunchTemplateName=web-app-launch-template,Version=\$Latest"
 
+  #  LATEST_VERSION=$(aws ec2 describe-launch-template-versions \
+  #           --launch-template-name web-app-launch-template \
+  #           --query 'LaunchTemplateVersions[-1].VersionNumber' \
+  #           --output text)
       # Step 13: Initiate Instance Refresh
       - name: Start Instance Refresh
         run: |
