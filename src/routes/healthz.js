@@ -34,26 +34,26 @@ router.get('/healthz', checkPayload, async (req, res) => {
 });
 
 
-// Health check route (GET) with payload check
-router.get('/cicd', checkPayload, async (req, res) => {
-  const isHealthy = await checkConnection(); // Check if database connection is healthy
-  client.increment('api.healthz.count');
-  const apiStart = Date.now();
-  try{
-    if (isHealthy) {
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    logger.info("Correct Healthz request.");
-    return res.status(200).send(); // 200 OK if connected to the database
+// // Health check route (GET) with payload check
+// router.get('/cicd', checkPayload, async (req, res) => {
+//   const isHealthy = await checkConnection(); // Check if database connection is healthy
+//   client.increment('api.healthz.count');
+//   const apiStart = Date.now();
+//   try{
+//     if (isHealthy) {
+//     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+//     logger.info("Correct Healthz request.");
+//     return res.status(200).send(); // 200 OK if connected to the database
     
-  } else {
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    logger.error("Error cheking healthz: ", error);
-    return res.status(503).send(); // 503 Service Unavailable if connection failed
-  }
-  }finally {
-    client.timing('api.createUser.duration', Date.now() - apiStart);
-}
-});
+//   } else {
+//     res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+//     logger.error("Error cheking healthz: ", error);
+//     return res.status(503).send(); // 503 Service Unavailable if connection failed
+//   }
+//   }finally {
+//     client.timing('api.createUser.duration', Date.now() - apiStart);
+// }
+// });
 
 router.post("/healthz", [checkExact()],  async (req, res) => {
     res.status(405).send();
