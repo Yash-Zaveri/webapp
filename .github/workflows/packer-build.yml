@@ -80,12 +80,26 @@ jobs:
           
       # cp packer-manifest.json ./
 
-     
-      # # Step 9.2: Share AMI with the DEMO account
-      # - name: Share AMI with DEMO Account
-      #   run: |
-      #     AMI_ID=$(jq -r '.builds[-1].artifact_id' packer-manifest.json | cut -d ":" -f2)
-      #     aws ec2 modify-image-attribute --image-id $AMI_ID --launch-permission "Add=[{UserId=${{ secrets.DEMO_ACCOUNT_ID }}}]"
+      # Step 9.1: Share AMI based on the environment
+      - name: Share AMI Based on Environment
+        run: |
+          AMI_ID=$(jq -r '.builds[0].artifact_id' packer-manifest.json | cut -d: -f2)
+          echo "AMI ID: $AMI_ID"
+          
+          if [ "${ACCOUNT}" == "dev" ]; then
+            echo "Sharing AMI with Demo account..."
+            aws ec2 modify-image-attribute \
+              --image-id $AMI_ID \
+              --launch-permission "Add=[{UserId=${{ secrets.DEMO_ACCOUNT_ID }}]"
+          elif [ "${ACCOUNT}" == "demo" ]; then
+            echo "Sharing AMI with Dev account..."
+            aws ec2 modify-image-attribute \
+              --image-id $AMI_ID \
+              --launch-permission "Add=[{UserId=${{ secrets.DEV_ACCOUNT_ID }}]"
+          else
+            echo "Unknown environment: ${ACCOUNT}"
+            exit 1
+          fi
 
 
       # Step 10: Extract AMI ID from Packer Manifest
